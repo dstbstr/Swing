@@ -1,4 +1,6 @@
-import * as SheetUtils from "../Utils/SheetUtils.ts"
+// seems like there is a bug in clasp which generates bad calls.
+//solution: comment out the line below before running `clasp push`
+import { GetSingleFolder, GetSingleFile, GetSingleSheet, GetSingleRow, IndexToHeader, FindColumnIndex} from "../Utils/SheetUtils.ts"
 import {MONTHS, PARENT_FOLDER_NAME} from "../Utils/Constants.ts"
 
 const FIRST_NAME_REGEX = /first ?name/i;
@@ -8,7 +10,7 @@ const WAIVER_NOTES_REGEX = /know/i;
 const ATTENDENCE_NOTES_REGEX = /notes/i;
 const MINORS_REGEX = /minor/i;
 
-const OnSubmit = () => {
+export default function OnSubmit () {
     const [firstName, lastName, notes, minors] = GetNewData();
     var attendenceSheet = GetAttendenceSheet();
     UpdateAttendence(attendenceSheet, firstName, lastName, notes);
@@ -19,13 +21,13 @@ const OnSubmit = () => {
 }
 
 const GetNewData = (): [string, string, string, string[]] => {
-    var waiverSheet = SpreadsheetApp.getActiveSheet();
-    var latestRow = SheetUtils.GetSingleRow(waiverSheet, waiverSheet.getLastRow());
-    var lut = SheetUtils.IndexToHeader(waiverSheet);
-    var firstNameIdx = SheetUtils.FindColumnIndex(lut, FIRST_NAME_REGEX);
-    var lastNameIdx = SheetUtils.FindColumnIndex(lut, LAST_NAME_REGEX);
-    var notesIdx = SheetUtils.FindColumnIndex(lut, WAIVER_NOTES_REGEX);
-    var minorsIdx = SheetUtils.FindColumnIndex(lut, MINORS_REGEX);
+    var waiverSheet = GetWaiverSheet();
+    var latestRow = GetSingleRow(waiverSheet, waiverSheet.getLastRow());
+    var lut = IndexToHeader(waiverSheet);
+    var firstNameIdx = FindColumnIndex(lut, FIRST_NAME_REGEX);
+    var lastNameIdx = FindColumnIndex(lut, LAST_NAME_REGEX);
+    var notesIdx = FindColumnIndex(lut, WAIVER_NOTES_REGEX);
+    var minorsIdx = FindColumnIndex(lut, MINORS_REGEX);
     var minors = latestRow[minorsIdx]
         .split("\n")
         .map(m => m.trim())
@@ -36,9 +38,17 @@ const GetNewData = (): [string, string, string, string[]] => {
 const GetAttendenceSheet = () : GoogleAppsScript.Spreadsheet.Sheet => {
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth();
-    const parentFolder = SheetUtils.GetSingleFolder(PARENT_FOLDER_NAME);
-    const attendenceFile = SheetUtils.GetSingleFile(parentFolder, `Example Attendance ${currentYear}`);
-    return SheetUtils.GetSingleSheet(SpreadsheetApp.open(attendenceFile), MONTHS[currentMonth]);
+    const parentFolder = GetSingleFolder(PARENT_FOLDER_NAME);
+    const attendenceFile = GetSingleFile(parentFolder, `Example Attendance ${currentYear}`);
+    return GetSingleSheet(SpreadsheetApp.open(attendenceFile), MONTHS[currentMonth]);
+};
+
+const GetWaiverSheet = () : GoogleAppsScript.Spreadsheet.Sheet => {
+    const currentYear = new Date().getFullYear();
+    const parentFolder = GetSingleFolder(PARENT_FOLDER_NAME);
+    const waiverFile = GetSingleFile(parentFolder, `Example Waiver ${currentYear} (Responses)`);
+    const spreadsheet = SpreadsheetApp.open(waiverFile);
+    return spreadsheet.getActiveSheet();
 };
 
 const FindExistingIndex = (sheet: GoogleAppsScript.Spreadsheet.Sheet, firstName: string, lastName: string, firstNameIdx: number, lastNameIdx: number) : number | undefined => {
@@ -53,11 +63,11 @@ const FindExistingIndex = (sheet: GoogleAppsScript.Spreadsheet.Sheet, firstName:
 };
 
 const UpdateAttendence = (sheet: GoogleAppsScript.Spreadsheet.Sheet, firstName: string, lastName: string, notes: string) => {
-    var lut = SheetUtils.IndexToHeader(sheet);
-    var firstNameIdx = SheetUtils.FindColumnIndex(lut, FIRST_NAME_REGEX);
-    var lastNameIdx = SheetUtils.FindColumnIndex(lut, LAST_NAME_REGEX);
-    var waiverIdx = SheetUtils.FindColumnIndex(lut, WAIVER_REGEX);
-    var notesIdx = SheetUtils.FindColumnIndex(lut, ATTENDENCE_NOTES_REGEX);
+    var lut = IndexToHeader(sheet);
+    var firstNameIdx = FindColumnIndex(lut, FIRST_NAME_REGEX);
+    var lastNameIdx = FindColumnIndex(lut, LAST_NAME_REGEX);
+    var waiverIdx = FindColumnIndex(lut, WAIVER_REGEX);
+    var notesIdx = FindColumnIndex(lut, ATTENDENCE_NOTES_REGEX);
     var existingIndex = FindExistingIndex(sheet, firstName, lastName, firstNameIdx, lastNameIdx);
     if (existingIndex === undefined) {
         var newRow = new Array(sheet.getLastColumn());
@@ -69,7 +79,7 @@ const UpdateAttendence = (sheet: GoogleAppsScript.Spreadsheet.Sheet, firstName: 
         Logger.log(`Added new row for ${firstName} ${lastName}`);
     }
     else {
-        var existingRow = SheetUtils.GetSingleRow(sheet, existingIndex);
+        var existingRow = GetSingleRow(sheet, existingIndex);
         existingRow[waiverIdx] = "Yes";
         existingRow[notesIdx] = notes;
         sheet.getRange(existingIndex, 1, 1, existingRow.length).setValues([existingRow]);
