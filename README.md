@@ -16,10 +16,15 @@ code .
 ```
 
 ## Making Changes
+There are multiple .clasp.json files.  Clasp will use the one named .clasp.json
+So if switching from woodside to durandal, change `.clasp.json` to `.clasp_woodside.json`
+and change `.clasp_durandal.json` to `.clasp.json`
+```
 clasp push
+```
 
 
 ## Architecture
 Google Scripts Apps are weird.  In order to add a submission trigger to a spreadsheet, the app must be on that sheet specifically.  You can also have a time-based script which lives on its own.  I wanted to be able to share common code (sheet names, month names, utils, etc.), and have a single git repo.
 
-So I've created an independent script project (Swing Scripts), and on the Waiver sheet, I've added a script which includes this project as a library.  It simply calls the OnSubmit function from WaiverWatcher.ts
+So I've created an independent script project (Swing Scripts), and on the Waiver sheet, I've added a script which includes this project as a library.  It simply calls the appropriate function from WaiverWatcher.ts

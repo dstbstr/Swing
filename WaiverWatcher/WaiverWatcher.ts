@@ -10,7 +10,7 @@ const WAIVER_NOTES_REGEX = /know/i;
 const ATTENDENCE_NOTES_REGEX = /notes/i;
 const MINORS_REGEX = /minor/i;
 
-export default function OnSubmit () {
+export default function CopyLatestWaiverToAttendance () {
     const [firstName, lastName, notes, minors] = GetNewData();
     var attendenceSheet = GetAttendenceSheet();
     UpdateAttendence(attendenceSheet, firstName, lastName, notes);
@@ -39,14 +39,16 @@ const GetAttendenceSheet = () : GoogleAppsScript.Spreadsheet.Sheet => {
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth();
     const parentFolder = GetSingleFolder(PARENT_FOLDER_NAME);
-    const attendenceFile = GetSingleFile(parentFolder, `Example Attendance ${currentYear}`);
-    return GetSingleSheet(SpreadsheetApp.open(attendenceFile), MONTHS[currentMonth]);
+    //const attandenceFile = GetSingleFile(parentFolder, `Example Attendance ${currentYear}`);
+    const attendanceFile = GetSingleFile(parentFolder, `Woodside Attendence ${currentYear}`);
+    return GetSingleSheet(SpreadsheetApp.open(attendanceFile), MONTHS[currentMonth]);
 };
 
 const GetWaiverSheet = () : GoogleAppsScript.Spreadsheet.Sheet => {
     const currentYear = new Date().getFullYear();
     const parentFolder = GetSingleFolder(PARENT_FOLDER_NAME);
-    const waiverFile = GetSingleFile(parentFolder, `Example Waiver ${currentYear} (Responses)`);
+    //const waiverFile = GetSingleFile(parentFolder, `Example Waiver ${currentYear} (Responses)`);
+    const waiverFile = GetSingleFile(parentFolder, `Woodside Waiver ${currentYear} Responses`);
     const spreadsheet = SpreadsheetApp.open(waiverFile);
     return spreadsheet.getActiveSheet();
 };
