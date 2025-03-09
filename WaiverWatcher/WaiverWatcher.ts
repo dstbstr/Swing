@@ -1,6 +1,6 @@
 // seems like there is a bug in clasp which generates bad calls.
 //solution: comment out the line below before running `clasp push`
-import { GetSingleFolder, GetSingleFile, GetSingleSheet, GetSingleRow, IndexToHeader, FindColumnIndex} from "../Utils/SheetUtils.ts"
+//import { GetSingleFolder, GetSingleFile, GetSingleSheet, GetSingleRow, IndexToHeader, FindColumnIndex} from "../Utils/SheetUtils.ts"
 import {MONTHS, PARENT_FOLDER_NAME} from "../Utils/Constants.ts"
 
 const FIRST_NAME_REGEX = /first/i;
@@ -75,6 +75,12 @@ const UpdateAttendence = (sheet: GoogleAppsScript.Spreadsheet.Sheet, firstName: 
     var lastNameIdx = FindColumnIndex(lut, LAST_NAME_REGEX);
     var waiverIdx = FindColumnIndex(lut, WAIVER_REGEX);
     //var notesIdx = FindColumnIndex(lut, ATTENDENCE_NOTES_REGEX);
+    var filter = sheet.getFilter();
+    var filterCriteria: GoogleAppsScript.Spreadsheet.FilterCriteria|null = null;
+    if (filter !== null) {
+        filterCriteria = filter.getColumnFilterCriteria(waiverIdx + 1);
+        filter.remove();
+    }
     var existingIndex = FindExistingIndex(sheet, firstName, lastName, firstNameIdx, lastNameIdx);
     if (existingIndex === undefined) {
         var newRow = new Array(sheet.getLastColumn());
@@ -91,5 +97,11 @@ const UpdateAttendence = (sheet: GoogleAppsScript.Spreadsheet.Sheet, firstName: 
         //existingRow[notesIdx] = notes;
         sheet.getRange(existingIndex, 1, 1, existingRow.length).setValues([existingRow]);
         Logger.log(`Updated row for ${firstName} ${lastName}`);
+    }
+
+    if(filterCriteria !== null) {
+        var range = sheet.getDataRange();
+        var newFilter = range.createFilter();
+        newFilter.setColumnFilterCriteria(waiverIdx + 1, filterCriteria);
     }
 };
