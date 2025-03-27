@@ -20,6 +20,14 @@ const GetSingleFile = (parentFolder: GoogleAppsScript.Drive.Folder, fileName: st
     }
     return result;
 };
+const TryGetSingleSheet = (sheet: GoogleAppsScript.Spreadsheet.Spreadsheet, sheetName: string): GoogleAppsScript.Spreadsheet.Sheet | undefined => {
+    var targetSheets = sheet.getSheets().filter(function (s) { return s.getName() === sheetName; });
+    if (targetSheets.length != 1) {
+        return undefined;
+    }
+    return targetSheets[0];
+};
+
 const GetSingleSheet = (sheet: GoogleAppsScript.Spreadsheet.Spreadsheet, sheetName: string): GoogleAppsScript.Spreadsheet.Sheet => {
     var targetSheets = sheet.getSheets().filter(function (s) { return s.getName() === sheetName; });
     if (targetSheets.length != 1) {
@@ -47,12 +55,24 @@ const FindColumnIndex = (lut: { [key: string]: number }, pattern: RegExp): numbe
     }
     return result[1];
 };
+const FindFirstDateIndex = (lut: { [key: string]: number }): number => {
+    var result = Object.entries(lut).find(([key, value]) => {
+        var date = new Date(key);
+        return !isNaN(date.getTime());
+    });
+    if (result === undefined) {
+        throw new Error(`Could not find first date column`);
+    }
+    return result[1];
+}
 
 export {
     GetSingleFolder,
     GetSingleFile,
+    TryGetSingleSheet,
     GetSingleSheet,
     GetSingleRow,
     IndexToHeader,
-    FindColumnIndex
+    FindColumnIndex,
+    FindFirstDateIndex
 }

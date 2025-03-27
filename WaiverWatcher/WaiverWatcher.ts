@@ -1,14 +1,12 @@
 // seems like there is a bug in clasp which generates bad calls.
-//solution: comment out the line below before running `clasp push`
-//import { GetSingleFolder, GetSingleFile, GetSingleSheet, GetSingleRow, IndexToHeader, FindColumnIndex} from "../Utils/SheetUtils.ts"
-import {MONTHS, PARENT_FOLDER_NAME} from "../Utils/Constants.ts"
+//solution: comment out the lines below before running `clasp push`
+// import { GetSingleRow, IndexToHeader, FindColumnIndex} from "../Utils/SheetUtils.ts"
+// import { GetAttendenceSheet, GetWaiverSheet } from "../Utils/WoodsideUtils.ts"
+import { FIRST_NAME_REGEX, LAST_NAME_REGEX, WAIVER_REGEX } from "../Utils/Constants.ts"
 
-const FIRST_NAME_REGEX = /first/i;
-const LAST_NAME_REGEX = /last/i;
-const WAIVER_REGEX = /waiver/i;
-const WAIVER_NOTES_REGEX = /know/i;
-const ATTENDENCE_NOTES_REGEX = /notes/i;
-const MINORS_REGEX = /minor/i;
+//const WAIVER_NOTES_REGEX = /know/i;
+//const ATTENDENCE_NOTES_REGEX = /notes/i;
+//const MINORS_REGEX = /minor/i;
 
 export default function CopyLatestWaiverToAttendance () {
     const [firstName, lastName/*, notes, minors*/] = GetNewData();
@@ -38,24 +36,6 @@ const GetNewData = (): [string, string/*, string, string[]*/] => {
         */
     //return [latestRow[firstNameIdx], latestRow[lastNameIdx], latestRow[notesIdx], minors];
     return [latestRow[firstNameIdx], latestRow[lastNameIdx]];
-};
-
-const GetAttendenceSheet = () : GoogleAppsScript.Spreadsheet.Sheet => {
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth();
-    const parentFolder = GetSingleFolder(PARENT_FOLDER_NAME);
-    //const attandenceFile = GetSingleFile(parentFolder, `Example Attendance ${currentYear}`);
-    const attendanceFile = GetSingleFile(parentFolder, `Woodside Attendence ${currentYear}`);
-    return GetSingleSheet(SpreadsheetApp.open(attendanceFile), MONTHS[currentMonth]);
-};
-
-const GetWaiverSheet = () : GoogleAppsScript.Spreadsheet.Sheet => {
-    const currentYear = new Date().getFullYear();
-    const parentFolder = GetSingleFolder(PARENT_FOLDER_NAME);
-    //const waiverFile = GetSingleFile(parentFolder, `Example Waiver ${currentYear} (Responses)`);
-    const waiverFile = GetSingleFile(parentFolder, `Woodside Waiver ${currentYear} Responses`);
-    const spreadsheet = SpreadsheetApp.open(waiverFile);
-    return spreadsheet.getActiveSheet();
 };
 
 const FindExistingIndex = (sheet: GoogleAppsScript.Spreadsheet.Sheet, firstName: string, lastName: string, firstNameIdx: number, lastNameIdx: number) : number | undefined => {

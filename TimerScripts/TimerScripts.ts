@@ -1,5 +1,6 @@
+import {MONTHS} from "../Utils/Constants.ts"
+
 const THURSDAY = 4;
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const EnsureMonthExists = () => {
     var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
