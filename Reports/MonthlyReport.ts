@@ -5,7 +5,7 @@ import { FIRST_NAME_REGEX, LAST_NAME_REGEX, WAIVER_REGEX, MONTHS } from "../Util
 export default function SendMonthlyReport() {
     const file = GetAttendenceFile();
     var monthStats: MonthStats[] = [];
-    var summaries: RowSummary[][] = [];
+    var weekNames: string[][] = [];
     for (var i = 0; i < MONTHS.length; i++) {
         var sheet = TryGetSingleSheet(file, MONTHS[i]);
         if(sheet === undefined) continue;
@@ -19,9 +19,10 @@ export default function SendMonthlyReport() {
         const sheetSummary = SummarizeSheet(sheet, firstNameColumn, lastNameColumn, waiverColumn, firstWeekColumn);
         const monthStat = SummarizeMonth(sheetSummary);
         monthStats[i] = monthStat; // keep month lined up with monthStats
+        weekNames[i] = GetWeekNames(lut, firstWeekColumn);
     }
     const yearStats = SummarizeYear(monthStats);
-    SendEmail(monthStats, yearStats);
+    SendEmail(monthStats, yearStats, weekNames);
 }
 
 class RowSummary {
@@ -138,11 +139,17 @@ const CountByWeek = (summary: RowSummary[]): number[] => {
     }, [] as number[]);
 }
 
-const SendEmail = (monthStats: MonthStats[], yearStats: YearStats) => {
-    const lastMonth = monthStats
-        .filter(stats => stats !== undefined)
-        .filter(stats => stats.uniqueNames.size > 0)
-        .slice(-1)[0];
+const SendEmail = (monthStats: MonthStats[], yearStats: YearStats, weekNames: string[][]) => {
+    let lastMonth: MonthStats | undefined = undefined;;
+    let lastMonthWeeks: string[] = [];
+
+    for(let i = monthStats.length - 1; i >= 0; i--) {
+        if(monthStats[i] !== undefined && monthStats[i].uniqueNames.size > 0) {
+            lastMonth = monthStats[i];
+            lastMonthWeeks = weekNames[i];
+            break;
+        }
+    }
     if(lastMonth === undefined) {
         Logger.log("Nothing to send");
         return;
@@ -150,7 +157,7 @@ const SendEmail = (monthStats: MonthStats[], yearStats: YearStats) => {
 
     const cumulativeCountChart = CreateCumulativeCountChart(yearStats);
     const cumulativeVisitChart = CreateCumulativeVisitChart(yearStats);
-    const countByWeekChart = CreateCountByWeekChart(lastMonth);
+    const countByWeekChart = CreateCountByWeekChart(lastMonth, lastMonthWeeks);
     const visitChart = CreateCountByVisitsChart(lastMonth);
 
     var blobs = new Array(4);
@@ -223,13 +230,13 @@ const CreateCumulativeVisitChart = (stats: YearStats): GoogleAppsScript.Charts.C
         .build();
 }
 
-const CreateCountByWeekChart = (stats: MonthStats): GoogleAppsScript.Charts.Chart => {
+const CreateCountByWeekChart = (stats: MonthStats, names: string[]): GoogleAppsScript.Charts.Chart => {
     var countByWeekData = Charts.newDataTable();
 
     countByWeekData.addColumn(Charts.ColumnType.STRING, "Week");
     countByWeekData.addColumn(Charts.ColumnType.NUMBER, "Attendance");
     for (var i = 0; i < Object.keys(stats.countByWeek).length; i++) {
-        countByWeekData.addRow([`Week ${i + 1}`, stats.countByWeek[i]]);
+        countByWeekData.addRow([names[i], stats.countByWeek[i]]);
     }
     return Charts.newColumnChart()
         .setTitle("Count by week")
@@ -287,13 +294,17 @@ const AddWarnings = (stats: MonthStats, body: string) : string => {
     return body;
 }
 
-const CountToWord = (count: number): string => {
-    switch(count) {
-        case 0: return "never";
-        case 1: return "once";
-        case 2: return "twice";
-        case 3: return "three times";
-        case 4: return "four times";
-        default: return "A bunch";
+const GetWeekNames = (lut: {[key: string]: number}, firstWeekColumn: number): string[] => {
+    var result: string[] = [];
+    for(var i = firstWeekColumn; i < Object.keys(lut).length; i++) {
+        var date = new Date(Object.keys(lut)[i]);
+        if(isNaN(date.getTime())) {
+            throw new Error(`Could not parse date ${Object.keys(lut)[i]}`);
+        }
+
+        //add "Thu 3" or "Mon 7" to the result
+        const options: Intl.DateTimeFormatOptions = {weekday: "short", day: "numeric"};
+        result.push(date.toLocaleDateString("en-US", options));
     }
+    return result;
 }
