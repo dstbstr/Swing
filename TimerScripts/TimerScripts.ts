@@ -18,6 +18,8 @@ export default function EnsureMonthExists() {
         return;
     }
 
+    Logger.log(`Creating ${MONTHS[month]} sheet`);
+
     var newSheet = file.insertSheet(MONTHS[month]);
     const nonDateHeaders = GetNonDateHeaders(previousMonth);
     const dateHeaders = GetDateHeaders();
@@ -30,7 +32,16 @@ export default function EnsureMonthExists() {
     newSheet.setFrozenRows(1);
 
     CopyPreviousMonth(newSheet, previousMonth, nonDateHeaders.length);
-};
+
+    const startLetter = 'A' + nonDateHeaders.length;
+    const endLetter = startLetter + dateHeaders.length;
+    const startRow = 2;
+    const endRow = newSheet.getDataRange().length + 20;
+    const dataRange = `${startLetter}${startRow}:${endLetter}${endRow}`;
+
+    AddDropdowns(newSheet.getRange(dataRange));
+    Logger.log(`Created ${MONTHS[month]} sheet`);
+}
 
 const GetNonDateHeaders = (sheet: GoogleAppsScript.Spreadsheet.Sheet): string[] => {
     const lut = IndexToHeader(sheet);
@@ -60,11 +71,34 @@ const GetDateHeaders = (): string[] => {
         result.push(`${month}-${dayStr}-${currentYear % 100}`);
     }
     return result;
-};
+}
 
 const CopyPreviousMonth = (current: GoogleAppsScript.Spreadsheet.Sheet, previous: GoogleAppsScript.Spreadsheet.Sheet, headerCount: number) => {
     var previousData = previous.getDataRange().getValues();
     previousData.slice(1).forEach(function (row) {
         current.appendRow(row.slice(0, headerCount));
     });
-};
+}
+
+const AddDropdowns = (range: GoogleAppsScript.Spreadsheet.Range) => {
+    const dropdowns = SpreadsheetApp.newDataValidation()
+        .requireValueInList([
+            "",
+            "Preregistered",
+            "10cc",
+            "10cash",
+            "5cc+vou",
+            "5cash+vou",
+            "5cc+student",
+            "5cash+student",
+            "Student+vou",
+            "5cash",
+            "5cc",
+            "vou",
+            "volunteer"
+        ])
+        .setAllowInvalid(true)
+        .build();
+
+    range.setDataValidation(dropdowns);
+}
