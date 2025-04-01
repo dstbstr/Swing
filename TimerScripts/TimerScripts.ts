@@ -20,7 +20,7 @@ export default function EnsureMonthExists() {
 
     Logger.log(`Creating ${MONTHS[month]} sheet`);
 
-    var newSheet = file.insertSheet(MONTHS[month]);
+    var newSheet = file.insertSheet(MONTHS[month], file.getNumSheets());
     const nonDateHeaders = GetNonDateHeaders(previousMonth);
     const dateHeaders = GetDateHeaders();
 
@@ -33,11 +33,12 @@ export default function EnsureMonthExists() {
 
     CopyPreviousMonth(newSheet, previousMonth, nonDateHeaders.length);
 
-    const startLetter = 'A' + nonDateHeaders.length;
-    const endLetter = startLetter + dateHeaders.length;
+    const startLetter = String.fromCharCode('A'.charCodeAt(0) + nonDateHeaders.length);
+    const endLetter = String.fromCharCode(startLetter.charCodeAt(0) + dateHeaders.length - 1);
     const startRow = 2;
-    const endRow = newSheet.getDataRange().length + 20;
+    const endRow = newSheet.getDataRange().getNumRows() + 20;
     const dataRange = `${startLetter}${startRow}:${endLetter}${endRow}`;
+    Logger.log(`Adding dropdowns to ${dataRange}`);
 
     AddDropdowns(newSheet.getRange(dataRange));
     Logger.log(`Created ${MONTHS[month]} sheet`);
@@ -65,7 +66,7 @@ const GetDateHeaders = (): string[] => {
     const firstThursday = ((11 - firstDayOfMonth) % 7) + 1;
     let result: string[] = [];
     
-    for (var day = firstThursday; day <= daysInMonth; day += 7) {
+    for (var day = firstThursday; day < daysInMonth; day += 7) {
         const month = `${currentMonth + 1}`.padStart(2, "0");
         const dayStr = `${day}`.padStart(2, "0");
         result.push(`${month}-${dayStr}-${currentYear % 100}`);
