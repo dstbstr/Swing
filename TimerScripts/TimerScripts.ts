@@ -45,7 +45,8 @@ export default function EnsureMonthExists() {
 }
 
 const GetNonDateHeaders = (sheet: GoogleAppsScript.Spreadsheet.Sheet): string[] => {
-    const lut = IndexToHeader(sheet);
+    const caseInsensitive = false;
+    const lut = IndexToHeader(sheet, caseInsensitive);
     const firstDateHeader = FindFirstDateIndex(lut);
     let result: string[] = [];
     Object.entries(lut).forEach(([header, index], _) => {

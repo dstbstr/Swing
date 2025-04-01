@@ -42,10 +42,14 @@ const GetSingleRow = (sheet: GoogleAppsScript.Spreadsheet.Sheet, row: number): a
     }
     return rowRect[0];
 };
-const IndexToHeader = (sheet: GoogleAppsScript.Spreadsheet.Sheet): { [key: string]: number } => {
+const IndexToHeader = (sheet: GoogleAppsScript.Spreadsheet.Sheet, caseInsensitive: boolean = true): { [key: string]: number } => {
     var firstRow = GetSingleRow(sheet, 1);
     var result = {};
-    firstRow.forEach((value, index) => result[value.toString().toLowerCase()] = index);
+    if(caseInsensitive) {
+        firstRow.forEach((value, index) => result[value.toString().toLowerCase()] = index);
+    } else {
+        firstRow.forEach((value, index) => result[value.toString()] = index);
+    }
     return result;
 }
 const FindColumnIndex = (lut: { [key: string]: number }, pattern: RegExp): number => {
