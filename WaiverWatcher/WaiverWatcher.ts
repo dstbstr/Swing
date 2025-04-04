@@ -1,7 +1,7 @@
 // seems like there is a bug in clasp which generates bad calls.
 //solution: comment out the lines below before running `clasp push`
 // import { GetSingleRow, IndexToHeader, FindColumnIndex} from "../Utils/SheetUtils.ts"
-// import { GetAttendenceSheet, GetWaiverSheet } from "../Utils/WoodsideUtils.ts"
+// import { GetAttendenceSheetCurrentMonth, GetWaiverSheet } from "../Utils/WoodsideUtils.ts"
 import { FIRST_NAME_REGEX, LAST_NAME_REGEX, WAIVER_REGEX } from "../Utils/Constants.ts"
 
 //const WAIVER_NOTES_REGEX = /know/i;
@@ -10,7 +10,7 @@ import { FIRST_NAME_REGEX, LAST_NAME_REGEX, WAIVER_REGEX } from "../Utils/Consta
 
 export default function CopyLatestWaiverToAttendance () {
     const [firstName, lastName/*, notes, minors*/] = GetNewData();
-    var attendenceSheet = GetAttendenceSheet();
+    var attendenceSheet = GetAttendenceSheetCurrentMonth();
     UpdateAttendence(attendenceSheet, firstName, lastName/*, notes*/);
     /*
     minors.forEach(m => {
