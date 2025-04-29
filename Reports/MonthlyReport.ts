@@ -1,6 +1,6 @@
-// import { IndexToHeader, FindColumnIndex, FindFirstDateIndex, TryGetSingleSheet } from "../Utils/SheetUtils.ts"
-// import { GetAttendenceFile } from "../Utils/WoodsideUtils.ts"
-import { FIRST_NAME_REGEX, LAST_NAME_REGEX, WAIVER_REGEX, MONTHS } from "../Utils/Constants.ts"
+// import { TryGetSingleSheet } from "../Utils/SheetUtils.ts"
+// import { GetAttendenceFile, SheetDetails } from "../Utils/WoodsideUtils.ts"
+import { MONTHS } from "../Utils/Constants.ts"
 
 export default function SendMonthlyReport() {
     const file = GetAttendenceFile();
@@ -10,16 +10,12 @@ export default function SendMonthlyReport() {
         var sheet = TryGetSingleSheet(file, MONTHS[i]);
         if(sheet === undefined) continue;
 
-        const lut = IndexToHeader(sheet);
-        const firstNameColumn = FindColumnIndex(lut, FIRST_NAME_REGEX);
-        const lastNameColumn = FindColumnIndex(lut, LAST_NAME_REGEX);
-        const waiverColumn = FindColumnIndex(lut, WAIVER_REGEX);
-        const firstWeekColumn = FindFirstDateIndex(lut);
+        const sheetDetails = new SheetDetails(sheet);
 
-        const sheetSummary = SummarizeSheet(sheet, firstNameColumn, lastNameColumn, waiverColumn, firstWeekColumn);
+        const sheetSummary = SummarizeSheet(sheet, sheetDetails);
         const monthStat = SummarizeMonth(sheetSummary);
         monthStats[i] = monthStat; // keep month lined up with monthStats
-        weekNames[i] = GetWeekNames(lut, firstWeekColumn);
+        weekNames[i] = GetWeekNames(sheetDetails);
     }
     const yearStats = SummarizeYear(monthStats);
     SendEmail(monthStats, yearStats, weekNames);
@@ -48,7 +44,7 @@ class YearStats {
     uniqueNameCounts: number[];
 }
 
-const SummarizeSheet = (sheet: GoogleAppsScript.Spreadsheet.Sheet, firstNameColumn: number, lastNameColumn: number, waiverColumn: number, firstWeekColumn: number): RowSummary[] => {
+const SummarizeSheet = (sheet: GoogleAppsScript.Spreadsheet.Sheet, sheetDetails: SheetDetails): RowSummary[] => {
     var result: RowSummary[] = [];
     var data = sheet.getDataRange().getValues();
     data.forEach((row, index) => {
@@ -56,12 +52,12 @@ const SummarizeSheet = (sheet: GoogleAppsScript.Spreadsheet.Sheet, firstNameColu
             return;
         }
         var rowSummary: RowSummary = {
-            hasWaiver: row[waiverColumn] !== "",
-            fullName: `${row[firstNameColumn]} ${row[lastNameColumn]}`.trim(),
-            hasFullName: row[firstNameColumn] !== "" && row[lastNameColumn] !== "",
+            hasWaiver: row[sheetDetails.WaiverColumn] !== "",
+            fullName: `${row[sheetDetails.FirstNameColumn]} ${row[sheetDetails.LastNameColumn]}`.trim(),
+            hasFullName: row[sheetDetails.FirstNameColumn] !== "" && row[sheetDetails.LastNameColumn] !== "",
             attended: []
         };
-        for (var col = firstWeekColumn; col < row.length; col++) {
+        for (var col = sheetDetails.FirstWeekColumn; col < row.length; col++) {
             rowSummary.attended.push(row[col] !== "");
         }
         if(rowSummary.hasWaiver === false && !rowSummary.attended.some(v => v)) {
@@ -294,12 +290,13 @@ const AddWarnings = (stats: MonthStats, body: string) : string => {
     return body;
 }
 
-const GetWeekNames = (lut: {[key: string]: number}, firstWeekColumn: number): string[] => {
+const GetWeekNames = (sheetDetails: SheetDetails): string[] => {
     var result: string[] = [];
-    for(var i = firstWeekColumn; i < Object.keys(lut).length; i++) {
-        var date = new Date(Object.keys(lut)[i]);
+    for(var i = sheetDetails.FirstWeekColumn; i < Object.keys(sheetDetails.Lut).length; i++) {
+        const val = Object.keys(sheetDetails.Lut)[i];
+        var date = new Date(val);
         if(isNaN(date.getTime())) {
-            throw new Error(`Could not parse date ${Object.keys(lut)[i]}`);
+            throw new Error(`Could not parse date ${val}`);
         }
 
         //add "Thu 3" or "Mon 7" to the result

@@ -52,22 +52,16 @@ const IndexToHeader = (sheet: GoogleAppsScript.Spreadsheet.Sheet, caseInsensitiv
     }
     return result;
 }
-const FindColumnIndex = (lut: { [key: string]: number }, pattern: RegExp): number => {
+const FindColumnIndex = (lut: { [key: string]: number }, pattern: RegExp): number|undefined => {
     var result = Object.entries(lut).find(([key, value]) => pattern.test(key));
-    if (result === undefined) {
-        throw new Error(`Could not find column with pattern ${pattern}`);
-    }
-    return result[1];
+    return result === undefined ? undefined : result[1];
 };
-const FindFirstDateIndex = (lut: { [key: string]: number }): number => {
+const FindFirstDateIndex = (lut: { [key: string]: number }): number|undefined => {
     var result = Object.entries(lut).find(([key, value]) => {
         var date = new Date(key);
         return !isNaN(date.getTime());
     });
-    if (result === undefined) {
-        throw new Error(`Could not find first date column`);
-    }
-    return result[1];
+    return result === undefined ? undefined : result[1];
 }
 
 export {
