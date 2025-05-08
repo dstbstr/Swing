@@ -136,11 +136,11 @@ const CountByWeek = (summary: RowSummary[]): number[] => {
 }
 
 const SendEmail = (monthStats: MonthStats[], yearStats: YearStats, weekNames: string[][]) => {
-    let lastMonth: MonthStats | undefined = undefined;;
+    let lastMonth: MonthStats | undefined = undefined;
     let lastMonthWeeks: string[] = [];
 
     for(let i = monthStats.length - 1; i >= 0; i--) {
-        if(monthStats[i] !== undefined && monthStats[i].uniqueNames.size > 0) {
+        if(monthStats[i] !== undefined && monthStats[i].countByWeek[0] > 0) {
             lastMonth = monthStats[i];
             lastMonthWeeks = weekNames[i];
             break;
@@ -177,14 +177,15 @@ const SendEmail = (monthStats: MonthStats[], yearStats: YearStats, weekNames: st
     body += "<h2>Attendance Month To Date</h2>";
     body += "<img src='cid:countByWeekChart' />";
 
-    body += "<h2>Visits This Month</h2>";
-    body += "<p>As in '24 dancers attended twice this month'</p>";
+    body += "<h2>Visits Last Month</h2>";
+    body += "<p>As in '24 dancers attended twice last month'</p>";
     body += `<img src="cid:visitChart" />`;
 
     body = AddWarnings(lastMonth, body);
 
     MailApp.sendEmail({
         to: "woodsideswingspokane@gmail.com",
+        cc: "dstbstr17@gmail.com",
         subject: `Monthly Report (${MONTHS[new Date().getMonth()]})`,
         htmlBody: body,
         inlineImages: images
