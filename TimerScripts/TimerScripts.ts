@@ -11,6 +11,12 @@ export default function EnsureThisMonth() {
 export const EnsureNextMonth = () => {
     EnsureMonthExists(new Date().getMonth() + 1);
 }
+export const UpdateVolunteers = () => {
+    const targetMonth = new Date().getMonth();
+    const sheet = GetAttendenceSheetCurrentMonth();
+    const dateHeaders = GetDateHeaders(targetMonth);
+    HighlightVolunteers(sheet, targetMonth, dateHeaders.length);
+}
 
 const EnsureMonthExists = (targetMonth: number) => {
     var file = GetAttendenceFile();
@@ -126,7 +132,14 @@ const HighlightVolunteers = (sheet: GoogleAppsScript.Spreadsheet.Sheet, targetMo
     ];
             
     const sheetDetails = new SheetDetails(sheet);
-        
+    const dateIdxs: {[key: string]: number} = {};
+    Object.entries(sheetDetails.Lut).forEach(([header, index], _) => {
+        let date = new Date(header);
+        if(date !== undefined) {
+            dateIdxs[FormatDate(date)] = index;
+        }
+    });
+
     LEADERS.forEach(leader => {
         const row = FindUserIndexByFullName(sheet, leader, sheetDetails.FirstNameColumn, sheetDetails.LastNameColumn);
         if(row === undefined) {
@@ -139,7 +152,7 @@ const HighlightVolunteers = (sheet: GoogleAppsScript.Spreadsheet.Sheet, targetMo
 
     const volunteers = GetVolunteers(targetMonth);
     Object.entries(volunteers).forEach(([date, names]) => {
-        const dateIdx = sheetDetails.Lut[date];
+        const dateIdx = dateIdxs[date];
         if(dateIdx === undefined) {
             Logger.log(`Could not find date ${date} in attendance sheet`);
             return;
