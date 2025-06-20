@@ -47,6 +47,7 @@ const CreateMonth = (month: number, file: GoogleAppsScript.Spreadsheet.Spreadshe
     var headerRow = newSheet.getRange(1, 1, 1, headerValues.length);
     headerRow.setFontWeight("bold");
     newSheet.setFrozenRows(1);
+    newSheet.protect().setRange(headerRow).setWarningOnly(true);
 
     CopyPreviousMonth(newSheet, prevMonth, nonDateHeaders.length);
     HighlightVolunteers(newSheet, month, dateHeaders.length);
@@ -118,6 +119,43 @@ const AddDropdowns = (range: GoogleAppsScript.Spreadsheet.Range) => {
         .setAllowInvalid(true)
         .build();
 
+    range.setDataValidation(dropdowns);
+}
+
+const AddEventDropdowns = (range: GoogleAppsScript.Spreadsheet.Range) => {
+    const dropdowns = SpreadsheetApp.newDataValidation()
+        .requireValueInList([
+            "",
+            "Preregistered",
+            "20cc",
+            "20cash",
+            "15cc+vou",
+            "15cash+vou",
+            "15cc+student",
+            "15cash+student",
+            "10cc+vou+student",
+            "10cash+vou+student",
+            "10cc+volunteer",
+            "10cash+volunteer"
+        ])
+        .setAllowInvalid(true)
+        .build();
+    range.setDataValidation(dropdowns);
+}
+
+const AddMondayDropdowns = (range: GoogleAppsScript.Spreadsheet.Range) => {
+    const dropdowns = SpreadsheetApp.newDataValidation()
+        .requireValueInList([
+            "",
+            "Preregistered",
+            "5cc",
+            "5cash",
+            "vou",
+            "volunteer",
+            "promotion"
+        ])
+        .setAllowInvalid(true)
+        .build();
     range.setDataValidation(dropdowns);
 }
 
