@@ -124,7 +124,6 @@ const AddDropdowns = (range: GoogleAppsScript.Spreadsheet.Range) => {
 const HighlightVolunteers = (sheet: GoogleAppsScript.Spreadsheet.Sheet, targetMonth: number, numDates: number) => {
     const LEADERS = [
         "Darcy Brown",
-        "Stacey Brown",
         "Amanda Darr",
         "Jason Goetz",
         "Tom Hamming",
