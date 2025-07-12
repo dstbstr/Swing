@@ -47,7 +47,7 @@ const CreateMonth = (month: number, file: GoogleAppsScript.Spreadsheet.Spreadshe
     var headerRow = newSheet.getRange(1, 1, 1, headerValues.length);
     headerRow.setFontWeight("bold");
     newSheet.setFrozenRows(1);
-    newSheet.protect().setRange(headerRow).setWarningOnly(true);
+    headerRow.protect().setWarningOnly(true);
 
     CopyPreviousMonth(newSheet, prevMonth, nonDateHeaders.length);
     HighlightVolunteers(newSheet, month, dateHeaders.length);
@@ -92,10 +92,16 @@ const GetDateHeaders = (targetMonth: number): string[] => {
 }
 
 const CopyPreviousMonth = (current: GoogleAppsScript.Spreadsheet.Sheet, previous: GoogleAppsScript.Spreadsheet.Sheet, headerCount: number) => {
-    var previousData = previous.getDataRange().getValues();
-    previousData.slice(1).forEach(function (row) {
-        current.appendRow(row.slice(0, headerCount));
-    });
+    const previousData = previous.getDataRange().getValues();
+    const sortColumn = 0; // meh, could look it up, but would require parsing the sheet details
+    const dataToCopy = previousData
+        .slice(1) // skip header row
+        .map(row => row.slice(0, headerCount)) // grab everything before the dates
+        .map(row => row.map(cell => cell.toString().trim())) // trim the cells
+        .filter(row => row[0] !== "" && row[1] !== "") // remove empty names
+        .sort((a, b) => { return a[sortColumn].localeCompare(b[sortColumn]); });
+    if(dataToCopy.length === 0) return;
+    current.getRange(2, 1, dataToCopy.length, headerCount).setValues(dataToCopy);
 }
 
 const AddDropdowns = (range: GoogleAppsScript.Spreadsheet.Range) => {
@@ -244,7 +250,11 @@ const GetVolunteers = (targetMonth: number): {[key: string]: string[]} => {
             }
             result[dateStr].push(name);
         }
-        Logger.log(`Found ${result[dateStr].length} volunteers for ${dateStr}`);
+        if(result[dateStr] === undefined) {
+            Logger.log(`No volunteers found for ${dateStr}`);
+        } else {
+            Logger.log(`Found ${result[dateStr].length} volunteers for ${dateStr}`);
+        }
     }
 
     return result;
