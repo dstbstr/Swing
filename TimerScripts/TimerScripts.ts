@@ -78,12 +78,12 @@ const GetNonDateHeaders = (sheet: GoogleAppsScript.Spreadsheet.Sheet): string[] 
 const GetDateHeaders = (targetMonth: number): string[] => {
     const date = new Date();
     const currentYear = date.getFullYear();
-    const daysInMonth = new Date(currentYear, targetMonth, 0).getDate();
+    const daysInMonth = new Date(currentYear, targetMonth + 1, 0).getDate(); // 0th day of the next month gives us the last day of the current month
     const firstDayOfMonth = new Date(currentYear, targetMonth, 1).getDay();
     const firstThursday = ((11 - firstDayOfMonth) % 7) + 1;
     let result: string[] = [];
     
-    for (var day = firstThursday; day < daysInMonth; day += 7) {
+    for (var day = firstThursday; day <= daysInMonth; day += 7) {
         const month = `${targetMonth + 1}`.padStart(2, "0");
         const dayStr = `${day}`.padStart(2, "0");
         result.push(`${month}-${dayStr}-${currentYear % 100}`);
