@@ -171,7 +171,8 @@ const HighlightVolunteers = (sheet: GoogleAppsScript.Spreadsheet.Sheet, targetMo
         "Amanda Darr",
         "Jason Goetz",
         "Tom Hamming",
-        "Dustin Randall"
+        "Dustin Randall",
+        "Meaghan Shell"
     ];
             
     const sheetDetails = new SheetDetails(sheet);
