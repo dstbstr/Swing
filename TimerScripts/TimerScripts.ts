@@ -57,9 +57,10 @@ const CreateMonth = (month: number, file: GoogleAppsScript.Spreadsheet.Spreadshe
     const startRow = 2;
     const endRow = newSheet.getDataRange().getNumRows() + 20;
     const dataRange = `${startLetter}${startRow}:${endLetter}${endRow}`;
+    
     Logger.log(`Adding dropdowns to ${dataRange}`);
-
     AddDropdowns(newSheet.getRange(dataRange));
+    
     Logger.log(`Created ${MONTHS[month]} sheet`);
 };
 
@@ -142,7 +143,8 @@ const AddEventDropdowns = (range: GoogleAppsScript.Spreadsheet.Range) => {
             "10cc+vou+student",
             "10cash+vou+student",
             "10cc+volunteer",
-            "10cash+volunteer"
+            "10cash+volunteer",
+            "PerformerGuest"
         ])
         .setAllowInvalid(true)
         .build();
