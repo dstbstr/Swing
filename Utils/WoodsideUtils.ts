@@ -43,14 +43,12 @@ export const GetPreregisterSheet = () : GoogleAppsScript.Spreadsheet.Sheet => {
 export class SheetDetails {
     FirstNameColumn: number;
     LastNameColumn: number;
-    WaiverColumn: number;
     FirstWeekColumn: number;
     Lut: { [key: string]: number };
     constructor(public sheet: GoogleAppsScript.Spreadsheet.Sheet, public caseInsensitive: boolean = true) {
         this.Lut = IndexToHeader(sheet, caseInsensitive);
         this.FirstNameColumn = FindColumnIndex(this.Lut, FIRST_NAME_REGEX) ?? -1;
         this.LastNameColumn = FindColumnIndex(this.Lut, LAST_NAME_REGEX) ?? -1;
-        this.WaiverColumn = FindColumnIndex(this.Lut, WAIVER_REGEX) ?? -1;
         this.FirstWeekColumn = FindFirstDateIndex(this.Lut) ?? -1;;
     }
 }

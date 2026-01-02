@@ -34,7 +34,6 @@ const GetNewData = (): [string, string/*, string, string[]*/] => {
 
 const UpdateAttendence = (sheet: GoogleAppsScript.Spreadsheet.Sheet, firstName: string, lastName: string/*, notes: string*/) => {
     const sheetDetails = new SheetDetails(sheet);
-    //var notesIdx = FindColumnIndex(lut, ATTENDENCE_NOTES_REGEX);
     var filter = sheet.getFilter();
     var filterCriteria: GoogleAppsScript.Spreadsheet.FilterCriteria|null = null;
     if (filter !== null) {
@@ -46,20 +45,13 @@ const UpdateAttendence = (sheet: GoogleAppsScript.Spreadsheet.Sheet, firstName: 
         var newRow = new Array(sheet.getLastColumn());
         newRow[sheetDetails.FirstNameColumn] = firstName;
         newRow[sheetDetails.LastNameColumn] = lastName;
-        newRow[sheetDetails.WaiverColumn] = "Yes";
         //newRow[sheetDetails.NotesColumn] = notes;
         sheet.appendRow(newRow);
         Logger.log(`Added new row for ${firstName} ${lastName}`);
     }
     else {
-        var existingRow = GetSingleRow(sheet, existingIndex);
-        //TODO: if waiver is already yes, could this be a duplicate?
-        existingRow[sheetDetails.WaiverColumn] = "Yes";
-        //existingRow[notesIdx] = notes;
-        sheet.getRange(existingIndex, 1, 1, existingRow.length).setValues([existingRow]);
-        Logger.log(`Updated row for ${firstName} ${lastName}`);
+        Logger.log(`User ${firstName} ${lastName} already exists.`);
     }
-
     if(filterCriteria !== null) {
         var range = sheet.getDataRange();
         var newFilter = range.createFilter();
