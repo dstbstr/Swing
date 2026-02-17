@@ -50,7 +50,6 @@ const CreateMonth = (month: number, file: GoogleAppsScript.Spreadsheet.Spreadshe
     headerRow.protect().setWarningOnly(true);
 
     CopyPreviousMonth(newSheet, prevMonth, nonDateHeaders.length);
-    HighlightVolunteers(newSheet, month, dateHeaders.length);
 
     const startLetter = String.fromCharCode('A'.charCodeAt(0) + nonDateHeaders.length);
     const endLetter = String.fromCharCode(startLetter.charCodeAt(0) + dateHeaders.length - 1);
@@ -60,7 +59,9 @@ const CreateMonth = (month: number, file: GoogleAppsScript.Spreadsheet.Spreadshe
     
     Logger.log(`Setting banding for ${dataRange}`);
     newSheet.getRange(dataRange).applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY);
-    
+
+    HighlightVolunteers(newSheet, month, dateHeaders.length);
+
     Logger.log(`Adding dropdowns to ${dataRange}`);
     AddDropdowns(newSheet.getRange(dataRange));
     
