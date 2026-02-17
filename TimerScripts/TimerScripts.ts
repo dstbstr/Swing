@@ -1,9 +1,10 @@
 import {MONTHS, MONTHS_LONG} from "../Utils/Constants.ts"
 
 // import {TryGetSingleSheet} from "../Utils/SheetUtils.ts"
-// import {GetAttendenceFile, FindUserIndexByFullName, SheetDetails, GetVolunteerFile, GetPreregisterSheet} from "../Utils/WoodsideUtils.ts"
+// import {GetAttendenceFile, GetPracticeFile, FindUserIndexByFullName, SheetDetails, GetVolunteerFile, GetPreregisterSheet} from "../Utils/WoodsideUtils.ts"
 
 const THURSDAY = 4;
+const MONDAY = 1;
 
 export default function EnsureThisMonth() {
     EnsureMonthExists(new Date().getMonth());
@@ -19,27 +20,36 @@ export const UpdateVolunteers = () => {
 }
 
 const EnsureMonthExists = (targetMonth: number) => {
-    var file = GetAttendenceFile();
-    const currentMonth = TryGetSingleSheet(file, MONTHS[targetMonth]);
-    const previousMonth = TryGetSingleSheet(file, MONTHS[targetMonth - 1]);
-    if(currentMonth !== undefined) {
-        Logger.log(`Sheet ${MONTHS[targetMonth]} already exists`);
-        return;
-    }
-    if(previousMonth === undefined) {
-        Logger.log(`Could not find ${MONTHS[targetMonth - 1]} sheet`);
-        return;
+    var thursdayFile = GetAttendenceFile();
+    const currentThursday = TryGetSingleSheet(thursdayFile, MONTHS[targetMonth]);
+    const previousThursday = TryGetSingleSheet(thursdayFile, MONTHS[targetMonth - 1]);
+
+    if(currentThursday === undefined && previousThursday !== undefined) {
+        Logger.log(`Creating ${MONTHS[targetMonth]} Thursday sheet`);
+        CreateMonth(targetMonth, THURSDAY, thursdayFile, previousThursday);
+        Logger.log(`Created ${MONTHS[targetMonth]} Thursday sheet`);
+
+    } else {
+        Logger.log(`No need to create ${MONTHS[targetMonth]} Thursday sheet`);
     }
 
-    CreateMonth(targetMonth, file, previousMonth);
+    var mondayFile = GetPracticeFile();
+    const currentMonday = TryGetSingleSheet(mondayFile, MONTHS[targetMonth]);
+    const previousMonday = TryGetSingleSheet(mondayFile, MONTHS[targetMonth - 1]);
+
+    if(currentMonday === undefined && previousMonday !== undefined) {
+        Logger.log(`Creating ${MONTHS[targetMonth]} Monday sheet`);
+        CreateMonth(targetMonth, MONDAY, mondayFile, previousMonday);
+        Logger.log(`Created ${MONTHS[targetMonth]} Monday sheet`);
+    } else {
+        Logger.log(`No need to create ${MONTHS[targetMonth]} Monday sheet`);
+    }
 }
 
-const CreateMonth = (month: number, file: GoogleAppsScript.Spreadsheet.Spreadsheet, prevMonth: GoogleAppsScript.Spreadsheet.Sheet) => {
-    Logger.log(`Creating ${MONTHS[month]} sheet`);
-
+const CreateMonth = (month: number, dayOfWeek: number, file: GoogleAppsScript.Spreadsheet.Spreadsheet, prevMonth: GoogleAppsScript.Spreadsheet.Sheet) => {
     var newSheet = file.insertSheet(MONTHS[month], file.getNumSheets());
     const nonDateHeaders = GetNonDateHeaders(prevMonth);
-    const dateHeaders = GetDateHeaders(month);
+    const dateHeaders = GetDateHeaders(month, dayOfWeek);
 
     const headerValues = nonDateHeaders.concat(dateHeaders);
 
@@ -57,15 +67,13 @@ const CreateMonth = (month: number, file: GoogleAppsScript.Spreadsheet.Spreadshe
     const endRow = newSheet.getDataRange().getNumRows() + 20;
     const dataRange = `${startLetter}${startRow}:${endLetter}${endRow}`;
     
-    Logger.log(`Setting banding for ${dataRange}`);
-    newSheet.getRange(dataRange).applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY);
+    newSheet.getRange(dataRange).applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY, false, false);
 
-    HighlightVolunteers(newSheet, month, dateHeaders.length);
-
-    Logger.log(`Adding dropdowns to ${dataRange}`);
-    AddDropdowns(newSheet.getRange(dataRange));
-    
-    Logger.log(`Created ${MONTHS[month]} sheet`);
+    if(dayOfWeek === THURSDAY) {
+        HighlightVolunteers(newSheet, month, dateHeaders.length);       
+        AddDropdowns(newSheet.getRange(dataRange));
+    }
+        
 };
 
 const GetNonDateHeaders = (sheet: GoogleAppsScript.Spreadsheet.Sheet): string[] => {
@@ -80,12 +88,12 @@ const GetNonDateHeaders = (sheet: GoogleAppsScript.Spreadsheet.Sheet): string[] 
     return result;    
 }
 
-const GetDateHeaders = (targetMonth: number): string[] => {
+const GetDateHeaders = (targetMonth: number, targetDay: number): string[] => {
     const date = new Date();
     const currentYear = date.getFullYear();
     const daysInMonth = new Date(currentYear, targetMonth + 1, 0).getDate(); // 0th day of the next month gives us the last day of the current month
     const firstDayOfMonth = new Date(currentYear, targetMonth, 1).getDay();
-    const firstThursday = ((11 - firstDayOfMonth) % 7) + 1;
+    const firstThursday = ((targetDay + 7 - firstDayOfMonth) % 7) + 1;
     let result: string[] = [];
     
     for (var day = firstThursday; day <= daysInMonth; day += 7) {
@@ -236,7 +244,7 @@ const GetVolunteers = (targetMonth: number): {[key: string]: string[]} => {
     const sheet = TryGetSingleSheet(file, MONTHS_LONG[targetMonth]);
     var result = {};
     if(sheet === undefined) {
-        Logger.log(`Could not find ${MONTHS_LONG[targetMonth]} sheet`);
+        Logger.log(`Could not find ${MONTHS_LONG[targetMonth]} volunteer sheet`);
         return result;
     }
 

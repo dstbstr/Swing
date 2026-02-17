@@ -40,6 +40,13 @@ export const GetPreregisterSheet = () : GoogleAppsScript.Spreadsheet.Sheet => {
     return SpreadsheetApp.open(file).getActiveSheet();
 }
 
+export const GetPracticeFile = () : GoogleAppsScript.Spreadsheet.Spreadsheet => {
+    const currentYear = new Date().getFullYear();
+    const parentFolder = GetSingleFolder(PARENT_FOLDER_NAME);
+    const file = GetSingleFile(parentFolder, `Monday Night ${currentYear}`);
+    return SpreadsheetApp.open(file);
+}
+
 export class SheetDetails {
     FirstNameColumn: number;
     LastNameColumn: number;
