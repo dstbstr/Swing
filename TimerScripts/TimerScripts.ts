@@ -58,6 +58,9 @@ const CreateMonth = (month: number, file: GoogleAppsScript.Spreadsheet.Spreadshe
     const endRow = newSheet.getDataRange().getNumRows() + 20;
     const dataRange = `${startLetter}${startRow}:${endLetter}${endRow}`;
     
+    Logger.log(`Setting banding for ${dataRange}`);
+    newSheet.getRange(dataRange).applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY);
+    
     Logger.log(`Adding dropdowns to ${dataRange}`);
     AddDropdowns(newSheet.getRange(dataRange));
     
