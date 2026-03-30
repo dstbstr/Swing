@@ -1,7 +1,7 @@
-import {MONTHS, MONTHS_LONG} from "../Utils/Constants.ts"
+import {MONTHS, MONTHS_LONG} from "../Utils/Constants"
 
-// import {TryGetSingleSheet} from "../Utils/SheetUtils.ts"
-// import {GetAttendenceFile, GetPracticeFile, FindUserIndexByFullName, SheetDetails, GetVolunteerFile, GetPreregisterSheet} from "../Utils/WoodsideUtils.ts"
+import {TryGetSingleSheet} from "../Utils/SheetUtils"
+import {GetAttendenceFile, GetAttendenceSheetCurrentMonth, GetPracticeFile, FindUserIndexByFullName, SheetDetails, GetVolunteerFile, GetPreregisterSheet} from "../Utils/WoodsideUtils"
 
 const THURSDAY = 4;
 const MONDAY = 1;
@@ -15,7 +15,7 @@ export const EnsureNextMonth = () => {
 export const UpdateVolunteers = () => {
     const targetMonth = new Date().getMonth();
     const sheet = GetAttendenceSheetCurrentMonth();
-    const dateHeaders = GetDateHeaders(targetMonth);
+    const dateHeaders = GetDateHeaders(targetMonth, THURSDAY);
     HighlightVolunteers(sheet, targetMonth, dateHeaders.length);
 }
 
@@ -262,7 +262,7 @@ const HighlightVolunteers = (sheet: GoogleAppsScript.Spreadsheet.Sheet, targetMo
 const GetVolunteers = (targetMonth: number): {[key: string]: string[]} => {
     const file = GetVolunteerFile();
     const sheet = TryGetSingleSheet(file, MONTHS_LONG[targetMonth]);
-    var result = {};
+    var result: {[key: string]: string[]} = {};
     if(sheet === undefined) {
         Logger.log(`Could not find ${MONTHS_LONG[targetMonth]} volunteer sheet`);
         return result;

@@ -44,7 +44,7 @@ const GetSingleRow = (sheet: GoogleAppsScript.Spreadsheet.Sheet, row: number): a
 };
 const IndexToHeader = (sheet: GoogleAppsScript.Spreadsheet.Sheet, caseInsensitive: boolean = true): { [key: string]: number } => {
     var firstRow = GetSingleRow(sheet, 1);
-    var result = {};
+    var result: { [key: string]: number } = {};
     if(caseInsensitive) {
         firstRow.forEach((value, index) => result[value.toString().toLowerCase()] = index);
     } else {

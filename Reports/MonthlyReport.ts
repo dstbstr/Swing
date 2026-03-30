@@ -1,6 +1,6 @@
-// import { TryGetSingleSheet } from "../Utils/SheetUtils.ts"
-// import { GetAttendenceFile, SheetDetails } from "../Utils/WoodsideUtils.ts"
-import { MONTHS } from "../Utils/Constants.ts"
+import { TryGetSingleSheet } from "../Utils/SheetUtils"
+import { GetAttendenceFile, SheetDetails } from "../Utils/WoodsideUtils"
+import { MONTHS } from "../Utils/Constants"
 
 export default function SendMonthlyReport() {
     const file = GetAttendenceFile();
@@ -22,26 +22,24 @@ export default function SendMonthlyReport() {
 }
 
 class RowSummary {
-    hasWaiver: boolean;
-    fullName: string;
-    hasFullName: boolean;
-    attended: boolean[];
+    fullName: string = "";
+    hasFullName: boolean = false;
+    attended: boolean[] = [];
 }
 
 class MonthStats {
-    countByWeek: number[];
-    countByVisit: number[];
-    missingWaivers: string[];
-    duplicateNames: string[];
-    incompleteNames: number;
-    uniqueNames: Map<string, number>;
+    countByWeek: number[] = [];
+    countByVisit: number[] = [];
+    duplicateNames: string[] = [];
+    incompleteNames: number = 0;
+    uniqueNames: Map<string, number> = new Map<string, number>();
 }
 
 class YearStats {
-    countByWeek: number[];
-    countByVisit: number[];
-    uniqueNames: Map<string, number>;
-    uniqueNameCounts: number[];
+    countByWeek: number[] = [];
+    countByVisit: number[] = [];
+    uniqueNames: Map<string, number> = new Map<string, number>();
+    uniqueNameCounts: number[] = [];
 }
 
 const SummarizeSheet = (sheet: GoogleAppsScript.Spreadsheet.Sheet, sheetDetails: SheetDetails): RowSummary[] => {
@@ -52,7 +50,6 @@ const SummarizeSheet = (sheet: GoogleAppsScript.Spreadsheet.Sheet, sheetDetails:
             return;
         }
         var rowSummary: RowSummary = {
-            hasWaiver: row[sheetDetails.WaiverColumn] !== "",
             fullName: `${row[sheetDetails.FirstNameColumn]} ${row[sheetDetails.LastNameColumn]}`.trim(),
             hasFullName: row[sheetDetails.FirstNameColumn] !== "" && row[sheetDetails.LastNameColumn] !== "",
             attended: []
@@ -60,7 +57,7 @@ const SummarizeSheet = (sheet: GoogleAppsScript.Spreadsheet.Sheet, sheetDetails:
         for (var col = sheetDetails.FirstWeekColumn; col < row.length; col++) {
             rowSummary.attended.push(row[col] !== "");
         }
-        if(rowSummary.hasWaiver === false && !rowSummary.attended.some(v => v)) {
+        if(!rowSummary.attended.some(v => v)) {
             // only include rows that have attended or have signed a waiver this year
             return;
         }
@@ -74,7 +71,6 @@ const SummarizeMonth = (summary: RowSummary[]): MonthStats => {
     let result: MonthStats = {
         countByWeek: [],
         countByVisit: [],
-        missingWaivers: [],
         duplicateNames: [],
         incompleteNames: 0,
         uniqueNames: new Map<string, number>()
@@ -87,9 +83,6 @@ const SummarizeMonth = (summary: RowSummary[]): MonthStats => {
         }
         result.uniqueNames.set(row.fullName, count);
         result.countByVisit[count] = (result.countByVisit[count] || 0) + 1;
-        if(!row.hasWaiver) {
-            result.missingWaivers.push(row.fullName);
-        }
         result.incompleteNames += row.hasFullName ? 0 : 1;
     });
 
@@ -157,7 +150,7 @@ const SendEmail = (monthStats: MonthStats[], yearStats: YearStats, weekNames: st
     const visitChart = CreateCountByVisitsChart(lastMonth);
 
     var blobs = new Array(4);
-    var images = {};
+    var images: { [key: string]: GoogleAppsScript.Base.Blob } = {};
     blobs[0] = cumulativeCountChart.getAs("image/png").setName("cumulativeCountChart");
     blobs[1] = cumulativeVisitChart.getAs("image/png").setName("cumulativeVisitChart");
     blobs[2] = countByWeekChart.getAs("image/png").setName("countByWeekChart");
@@ -263,17 +256,8 @@ const CreateCountByVisitsChart = (stats: MonthStats): GoogleAppsScript.Charts.Ch
 }
 
 const AddWarnings = (stats: MonthStats, body: string) : string => {
-    if(stats.missingWaivers.length > 0 || stats.incompleteNames > 0 || stats.duplicateNames.length > 0) {
+    if(stats.incompleteNames > 0 || stats.duplicateNames.length > 0) {
         body += "<h2>Warnings</h2>";
-        if(stats.missingWaivers.length > 0) {
-            body += "<h3>Missing Waivers</h3>";
-            body += "<p>Dancers who attended, but do not have a signed waiver</p>";
-            body += "<ul>";
-            stats.missingWaivers.forEach(name => {
-                body += `<li>${name}</li>`;
-            });
-            body += "</ul>";
-        }
         if(stats.duplicateNames.length > 0) {
             body += `<h3>Duplicate Names</h3>`;
             body += "<ul>";

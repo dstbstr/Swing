@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "outDir": "./out",
+    "target": "ES2017",
+    "lib": ["es2017"],
+    "module": "commonjs",
+    "types": ["google-apps-script"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "out", "dist"]
+}

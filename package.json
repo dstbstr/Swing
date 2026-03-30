@@ -1,5 +1,10 @@
 {
-  "dependencies": {
-    "@types/google-apps-script": "^1.0.97"
+  "scripts": {
+    "typecheck": "tsc -p . --noEmit",
+    "build": "npm run typecheck && node ./scripts/build-gas.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.9",
+    "@types/google-apps-script": "^2.0.8"
   }
 }
