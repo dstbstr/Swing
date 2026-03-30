@@ -261,10 +261,10 @@ const HighlightVolunteers = (sheet: GoogleAppsScript.Spreadsheet.Sheet, targetMo
 
 const GetVolunteers = (targetMonth: number): {[key: string]: string[]} => {
     const file = GetVolunteerFile();
-    const sheet = TryGetSingleSheet(file, MONTHS_LONG[targetMonth]);
+    const sheet = TryGetSingleSheet(file, MONTHS[targetMonth]);
     var result: {[key: string]: string[]} = {};
     if(sheet === undefined) {
-        Logger.log(`Could not find ${MONTHS_LONG[targetMonth]} volunteer sheet`);
+        Logger.log(`Could not find ${MONTHS[targetMonth]} volunteer sheet`);
         return result;
     }
 

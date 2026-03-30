@@ -1,8 +1,5 @@
-// seems like there is a bug in clasp which generates bad calls.
-//solution: comment out the lines below before running `clasp push`
  import { GetSingleRow} from "../Utils/SheetUtils"
  import { GetAttendenceSheetCurrentMonth, GetWaiverSheet, FindUserIndex, SheetDetails } from "../Utils/WoodsideUtils"
-
 
 export default function CopyLatestWaiverToAttendance () {
     const [firstName, lastName/*, notes, minors*/] = GetNewData();
