@@ -188,6 +188,16 @@ const HighlightVolunteers = (sheet: GoogleAppsScript.Spreadsheet.Sheet, targetMo
         "Dustin Randall",
         "Meaghan Shell"
     ];
+
+    const COMMUNITY_LEADERS = [
+        "Jenny Fulton",
+        "Celeste Depew",
+        "Cooper Siems",
+        "Michaila Caine",
+        "Aubrey Jones",
+        "Lilly Turpin",
+        "Isaac Simmons"
+    ];
             
     const sheetDetails = new SheetDetails(sheet);
     const dateIdxs: {[key: string]: number} = {};
@@ -206,6 +216,16 @@ const HighlightVolunteers = (sheet: GoogleAppsScript.Spreadsheet.Sheet, targetMo
         }
         const rowRange = sheet.getRange(row, sheetDetails.FirstWeekColumn + 1, 1, numDates);
         rowRange.setBackground("yellow");
+    });
+
+    COMMUNITY_LEADERS.forEach(leader => {
+        const row = FindUserIndexByFullName(sheet, leader, sheetDetails.FirstNameColumn, sheetDetails.LastNameColumn);
+        if(row === undefined) {
+            Logger.log(`Could not find row for ${leader}`);
+            return;
+        }
+        const rowRange = sheet.getRange(row, sheetDetails.FirstWeekColumn + 1, 1, numDates);
+        rowRange.setBackground("purple");
     });
 
     const volunteers = GetVolunteers(targetMonth);
