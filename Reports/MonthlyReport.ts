@@ -276,17 +276,19 @@ const AddWarnings = (stats: MonthStats, body: string) : string => {
 }
 
 const GetWeekNames = (sheetDetails: SheetDetails): string[] => {
-    var result: string[] = [];
-    for(var i = sheetDetails.FirstWeekColumn; i < Object.keys(sheetDetails.Lut).length; i++) {
-        const val = Object.keys(sheetDetails.Lut)[i];
-        var date = new Date(val);
-        if(isNaN(date.getTime())) {
-            throw new Error(`Could not parse date ${val}`);
-        }
-
-        //add "Thu 3" or "Mon 7" to the result
-        const options: Intl.DateTimeFormatOptions = {weekday: "short", day: "numeric"};
-        result.push(date.toLocaleDateString("en-US", options));
+    if (sheetDetails.FirstWeekColumn < 0) {
+        return [];
     }
-    return result;
+
+    const options: Intl.DateTimeFormatOptions = { weekday: "short", day: "numeric" };
+
+    return Object.entries(sheetDetails.Lut)
+        .filter(([, columnIndex]) => columnIndex >= sheetDetails.FirstWeekColumn)
+        .sort((a, b) => a[1] - b[1])
+        .map(([headerName]) => headerName)
+        .filter((headerName) => {
+            const date = new Date(headerName);
+            return !isNaN(date.getTime());
+        })
+        .map((headerName) => new Date(headerName).toLocaleDateString("en-US", options));
 }
