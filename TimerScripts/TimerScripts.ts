@@ -1,7 +1,7 @@
 import {MONTHS, MONTHS_LONG} from "../Utils/Constants"
 
 import {TryGetSingleSheet} from "../Utils/SheetUtils"
-import {GetAttendenceFile, GetAttendenceSheetCurrentMonth, GetPracticeFile, FindUserIndexByFullName, SheetDetails, GetVolunteerFile, GetPreregisterSheet} from "../Utils/WoodsideUtils"
+import {GetAttendanceFile, GetAttendanceSheetCurrentMonth, GetPracticeFile, FindUserIndex, SheetDetails, GetVolunteerFile} from "../Utils/WoodsideUtils"
 
 const THURSDAY = 4;
 const MONDAY = 1;
@@ -14,13 +14,13 @@ export const EnsureNextMonth = () => {
 }
 export const UpdateVolunteers = () => {
     const targetMonth = new Date().getMonth();
-    const sheet = GetAttendenceSheetCurrentMonth();
+    const sheet = GetAttendanceSheetCurrentMonth();
     const dateHeaders = GetDateHeaders(targetMonth, THURSDAY);
     HighlightVolunteers(sheet, targetMonth, dateHeaders.length);
 }
 
 const EnsureMonthExists = (targetMonth: number) => {
-    var thursdayFile = GetAttendenceFile();
+    var thursdayFile = GetAttendanceFile();
     const currentThursday = TryGetSingleSheet(thursdayFile, MONTHS[targetMonth]);
     const previousThursday = TryGetSingleSheet(thursdayFile, MONTHS[targetMonth - 1]);
 
@@ -111,7 +111,7 @@ const CopyPreviousMonth = (current: GoogleAppsScript.Spreadsheet.Sheet, previous
         .slice(1) // skip header row
         .map(row => row.slice(0, headerCount)) // grab everything before the dates
         .map(row => row.map(cell => cell.toString().trim())) // trim the cells
-        .filter(row => row[0] !== "" && row[1] !== "") // remove empty names
+        .filter(row => row[0] !== "") // remove empty names
         .sort((a, b) => { return a[sortColumn].localeCompare(b[sortColumn]); });
     if(dataToCopy.length === 0) return;
     current.getRange(2, 1, dataToCopy.length, headerCount).setValues(dataToCopy);
@@ -121,6 +121,7 @@ const AddDropdowns = (range: GoogleAppsScript.Spreadsheet.Range) => {
     const dropdowns = SpreadsheetApp.newDataValidation()
         .requireValueInList([
             "",
+            "Punch card",
             "Preregistered",
             "10cc",
             "10cash",
@@ -129,9 +130,6 @@ const AddDropdowns = (range: GoogleAppsScript.Spreadsheet.Range) => {
             "5cc+student",
             "5cash+student",
             "Student+vou",
-            "5cash",
-            "5cc",
-            "vou",
             "volunteer",
             "promotion"
         ])
@@ -163,30 +161,15 @@ const AddEventDropdowns = (range: GoogleAppsScript.Spreadsheet.Range) => {
     range.setDataValidation(dropdowns);
 }
 
-const AddMondayDropdowns = (range: GoogleAppsScript.Spreadsheet.Range) => {
-    const dropdowns = SpreadsheetApp.newDataValidation()
-        .requireValueInList([
-            "",
-            "Preregistered",
-            "5cc",
-            "5cash",
-            "vou",
-            "volunteer",
-            "promotion"
-        ])
-        .setAllowInvalid(true)
-        .build();
-    range.setDataValidation(dropdowns);
-}
-
 const HighlightVolunteers = (sheet: GoogleAppsScript.Spreadsheet.Sheet, targetMonth: number, numDates: number) => {
     const LEADERS = [
         "Darcy Brown",
         "Amanda Darr",
         "Jason Goetz",
-        "Tom Hamming",
+        "Alyssa Lobkov",
         "Dustin Randall",
-        "Meaghan Shell"
+        "Meaghan Shell",
+        "Mary Carpenter"
     ];
 
     const COMMUNITY_LEADERS = [
@@ -209,7 +192,7 @@ const HighlightVolunteers = (sheet: GoogleAppsScript.Spreadsheet.Sheet, targetMo
     });
 
     LEADERS.forEach(leader => {
-        const row = FindUserIndexByFullName(sheet, leader, sheetDetails.FirstNameColumn, sheetDetails.LastNameColumn);
+        const row = FindUserIndex(sheet, leader, sheetDetails.FullNameColumn);
         if(row === undefined) {
             Logger.log(`Could not find row for ${leader}`);
             return;
@@ -219,7 +202,7 @@ const HighlightVolunteers = (sheet: GoogleAppsScript.Spreadsheet.Sheet, targetMo
     });
 
     COMMUNITY_LEADERS.forEach(leader => {
-        const row = FindUserIndexByFullName(sheet, leader, sheetDetails.FirstNameColumn, sheetDetails.LastNameColumn);
+        const row = FindUserIndex(sheet, leader, sheetDetails.FullNameColumn);
         if(row === undefined) {
             Logger.log(`Could not find row for ${leader}`);
             return;
@@ -236,7 +219,7 @@ const HighlightVolunteers = (sheet: GoogleAppsScript.Spreadsheet.Sheet, targetMo
             return;
         }
         names.forEach(name => {
-            const row = FindUserIndexByFullName(sheet, name, sheetDetails.FirstNameColumn, sheetDetails.LastNameColumn);
+            const row = FindUserIndex(sheet, name, sheetDetails.FullNameColumn);
             if(row === undefined) {
                 Logger.log(`Could not find ${name} in attendance sheet`);
                 return;
@@ -245,17 +228,6 @@ const HighlightVolunteers = (sheet: GoogleAppsScript.Spreadsheet.Sheet, targetMo
             const rowRange = sheet.getRange(row, dateIdx + 1);
             rowRange.setBackground("yellow");
         });
-    });
-
-    const preregs = GetPreregs(targetMonth)
-    preregs.forEach(name => {
-        const row = FindUserIndexByFullName(sheet, name, sheetDetails.FirstNameColumn, sheetDetails.LastNameColumn);
-        if(row === undefined) {
-            Logger.log(`Could not find ${name} in attendance sheet`);
-            return;
-        }
-        const rowRange = sheet.getRange(row, sheetDetails.FirstWeekColumn + 1, 1, numDates);
-        rowRange.setBackground("green");
     });
 }
 
@@ -292,33 +264,6 @@ const GetVolunteers = (targetMonth: number): {[key: string]: string[]} => {
         }
     }
 
-    return result;
-}
-
-const GetPreregs = (targetMonth: number): string[] => {
-    const sheet = GetPreregisterSheet();
-    const data = sheet.getDataRange().getValues();
-    var result: string[] = [];
-    var targetMonthName = MONTHS_LONG[targetMonth].toLowerCase();
-    var nextMonthName = MONTHS_LONG[targetMonth + 1].toLowerCase();
-
-    var inTargetMonth = false;
-
-    for(var row = 1; row < data.length; row++) {
-        const val = data[row][0].toString();
-        if(val.toLowerCase().startsWith(targetMonthName)) {
-            inTargetMonth = true;
-            Logger.log(`Found target month ${targetMonthName} in Preregister sheet`);
-            continue;
-        }
-        if(inTargetMonth) {
-            // TODO: Brittle, expects each month to end with a blank line
-            // Could check for next month name, except people might be named April, May, or June
-            // Could check for bold/underline, or ending in 'Lindy Hop' but all of these are equally brittle
-            if(val === "") break;
-            result.push(val);
-        }
-    }
     return result;
 }
 

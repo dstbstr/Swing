@@ -1,46 +1,41 @@
  import { GetSingleRow} from "../Utils/SheetUtils"
- import { GetAttendenceSheetCurrentMonth, GetWaiverSheet, FindUserIndex, SheetDetails } from "../Utils/WoodsideUtils"
+ import { GetAttendanceSheetCurrentMonth, GetWaiverSheet, FindUserIndex, SheetDetails } from "../Utils/WoodsideUtils"
 
 export default function CopyLatestWaiverToAttendance () {
-    const [firstName, lastName/*, notes, minors*/] = GetNewData();
-    var attendenceSheet = GetAttendenceSheetCurrentMonth();
-    UpdateAttendence(attendenceSheet, firstName, lastName/*, notes*/);
-    /*
-    minors.forEach(m => {
-        var [minorFirstName, minorLastName] = m.split(" ", 2);
-        UpdateAttendence(attendenceSheet, minorFirstName, minorLastName, notes);
-    });
-    */
+    const [fullName, parent] = GetNewData();
+    var attendanceSheet = GetAttendanceSheetCurrentMonth();
+    UpdateAttendance(attendanceSheet, fullName, parent);
 }
 
-const GetNewData = (): [string, string/*, string, string[]*/] => {
+const GetNewData = (): [string, string] => {
     var waiverSheet = GetWaiverSheet();
     var latestRow = GetSingleRow(waiverSheet, waiverSheet.getLastRow());
     var sheetDetails = new SheetDetails(waiverSheet);
-    /*
-    var notesIdx = FindColumnIndex(lut, WAIVER_NOTES_REGEX);
-    var minorsIdx = FindColumnIndex(lut, MINORS_REGEX);
-    var minors = latestRow[minorsIdx]
-        .split("\n")
-        .map(m => m.trim())
-        .filter(m => m.length > 0);
-        */
-    //return [latestRow[firstNameIdx], latestRow[lastNameIdx], latestRow[notesIdx], minors];
-    return [latestRow[sheetDetails.FirstNameColumn].trim(), latestRow[sheetDetails.LastNameColumn].trim()];
+    var fullName = latestRow[sheetDetails.ParticipantColumn].trim();
+    var signature = latestRow[sheetDetails.SignatureColumn].trim();
+    var parent = latestRow[sheetDetails.ParentColumn].trim();
+
+    if (!IsFullName(fullName) && IsFullName(signature) &&
+        (parent === "" || signature.toLowerCase().startsWith(fullName.charAt(0).toLowerCase()))) {
+        fullName = signature;
+    }
+
+    return [fullName, parent];
 };
 
-const UpdateAttendence = (sheet: GoogleAppsScript.Spreadsheet.Sheet, firstName: string, lastName: string/*, notes: string*/) => {
+const IsFullName = (name: string): boolean => name.trim().split(/\s+/).length > 1;
+
+const UpdateAttendance = (sheet: GoogleAppsScript.Spreadsheet.Sheet, fullName: string, parent: string) => {
     const sheetDetails = new SheetDetails(sheet);
-    var existingIndex = FindUserIndex(sheet, firstName, lastName, sheetDetails.FirstNameColumn, sheetDetails.LastNameColumn);
+    var existingIndex = FindUserIndex(sheet, fullName, sheetDetails.FullNameColumn);
     if (existingIndex === undefined) {
         var newRow = new Array(sheet.getLastColumn());
-        newRow[sheetDetails.FirstNameColumn] = firstName;
-        newRow[sheetDetails.LastNameColumn] = lastName;
-        //newRow[sheetDetails.NotesColumn] = notes;
+        newRow[sheetDetails.FullNameColumn] = fullName;
+        newRow[sheetDetails.NotesColumn] = parent;
         sheet.appendRow(newRow);
-        Logger.log(`Added new row for ${firstName} ${lastName}`);
+        Logger.log(`Added new row for ${fullName}`);
     }
     else {
-        Logger.log(`User ${firstName} ${lastName} already exists.`);
+        Logger.log(`User ${fullName} already exists.`);
     }
 };

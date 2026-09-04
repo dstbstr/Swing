@@ -1,9 +1,9 @@
 import { TryGetSingleSheet } from "../Utils/SheetUtils"
-import { GetAttendenceFile, SheetDetails } from "../Utils/WoodsideUtils"
+import { GetAttendanceFile, SheetDetails } from "../Utils/WoodsideUtils"
 import { MONTHS } from "../Utils/Constants"
 
 export default function SendMonthlyReport() {
-    const file = GetAttendenceFile();
+    const file = GetAttendanceFile();
     var monthStats: MonthStats[] = [];
     var weekNames: string[][] = [];
     for (var i = 0; i < MONTHS.length; i++) {
@@ -50,8 +50,8 @@ const SummarizeSheet = (sheet: GoogleAppsScript.Spreadsheet.Sheet, sheetDetails:
             return;
         }
         var rowSummary: RowSummary = {
-            fullName: `${row[sheetDetails.FirstNameColumn]} ${row[sheetDetails.LastNameColumn]}`.trim(),
-            hasFullName: row[sheetDetails.FirstNameColumn] !== "" && row[sheetDetails.LastNameColumn] !== "",
+            fullName: `${row[sheetDetails.FullNameColumn]}`.trim(),
+            hasFullName: row[sheetDetails.FullNameColumn] !== "",
             attended: []
         };
         for (var col = sheetDetails.FirstWeekColumn; col < row.length; col++) {

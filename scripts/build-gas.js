@@ -13,8 +13,6 @@ const gasWrappers = [
   'function EnsureNextMonth() { return globalThis.__EnsureNextMonthImpl(); }',
   'function UpdateVolunteers() { return globalThis.__UpdateVolunteersImpl(); }',
   'function CopyLatestWaiverToAttendance() { return globalThis.__CopyLatestWaiverToAttendanceImpl(); }',
-  // Keep backward compatibility for existing trigger/library calls with the original typo.
-  'function CopyLaatestWaiverToAttendance() { return globalThis.__CopyLatestWaiverToAttendanceImpl(); }'
 ].join('\n');
 
 async function build() {
